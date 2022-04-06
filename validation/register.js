@@ -1,0 +1,1 @@
+export const registerValidation=[body('email').isEmail(),body('username').isUser];
