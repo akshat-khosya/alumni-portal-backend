@@ -9,4 +9,6 @@ const registerValidations = [
     .isAlphanumeric()
     .withMessage("Username should only contain A-Z,a-z,0-9"),
 ];
-module.exports = {registerValidations};
+const loginValidation=[
+check("password").isLength({ min: 6 })];
+module.exports = {registerValidations,loginValidation};
