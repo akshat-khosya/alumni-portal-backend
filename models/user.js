@@ -1,7 +1,8 @@
 const mongoose=require('mongoose');
 const UserSchema=new mongoose.Schema({
     fname:{
-        type:String
+        type:String,
+        required:true
     },
     lname:{
         type:String
@@ -18,7 +19,8 @@ const UserSchema=new mongoose.Schema({
         type:String
     },
     role:{
-        type:String
+        type:String,
+        default:"student"
     },
     verifcation:{
         type:Boolean,
