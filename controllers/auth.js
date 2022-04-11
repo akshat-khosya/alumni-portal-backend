@@ -33,7 +33,7 @@ exports.register = async (req, res) => {
     return res.status(500).json({ errors: [{ message: "server error" }] });
   }
 };
-
+// login
 exports.login = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
