@@ -1,7 +1,15 @@
 const { validationResult } = require("express-validator");
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
-const jwt=require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
+const { sendEmail } = require("../utils/email");
+const {
+  findById,
+  findByIdAndUpdate,
+  findOneAndUpdate,
+  findOne,
+} = require("../models/user");
+verifyEmailTemplate = require("../utils/verifyEmailTemplate");
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -25,6 +33,11 @@ exports.register = async (req, res) => {
         console.log(err);
         return res.status(500).json({ errors: [{ message: "server error" }] });
       } else {
+        const link = `${process.env.URL}api/auth/verifyemail/${
+          savedUser.email
+        }/${savedUser._id.toHexString()}`;
+        console.log(link);
+        sendEmail(req.body.email, "verify email", verifyEmailTemplate(link));
         return res.status(200).json({ message: "user registered succesfully" });
       }
     });
@@ -49,21 +62,25 @@ exports.login = async (req, res) => {
         checkUser.password
       );
       if (validate) {
-        if (checkUser.verifcation) {
-          if (checkUser.adminVerifcation) {
-            const {password,...others}=checkUser._doc;
+        if (checkUser.verification) {
+          if (checkUser.adminverification) {
+            const { password, ...others } = checkUser._doc;
             console.log(others);
-            const token = jwt.sign({uid:checkUser._id.toHexString()}, process.env.JWT_SECRET,{ expiresIn: "30d" });
-            return res.status(200).json({useData:others,token:token});
+            const token = jwt.sign(
+              { uid: checkUser._id.toHexString() },
+              process.env.JWT_SECRET,
+              { expiresIn: "30d" }
+            );
+            return res.status(200).json({ useData: others, token: token });
           } else {
             return res
               .status(401)
               .json({ errors: [{ message: "Admin will verify you" }] });
           }
         } else {
-          return res
-            .status(401)
-            .json({ errors: [{ message: "Please verify your email address" }] });
+          return res.status(401).json({
+            errors: [{ message: "Please verify your email address" }],
+          });
         }
       } else {
         return res
@@ -74,6 +91,36 @@ exports.login = async (req, res) => {
       return res
         .status(401)
         .json({ errors: [{ message: "Invalid Credentials" }] });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ errors: [{ message: "server error" }] });
+  }
+};
+
+exports.verifyEmail = async (req, res) => {
+  const { email, token } = req.params;
+  try {
+    const data = await User.findOne({ email: email });
+    if (data.verification) {
+      return res
+        .status(401)
+        .json({ errors: [{ message: "You are already verified" }] });
+    } else {
+      if (data._id.toHexString() === token) {
+        const user = await User.updateOne(
+          { email: email },
+          { verification: true }
+        );
+        if(!user){
+          return res
+        .status(401)
+        .json({ errors: [{ message: "could not verify " }] });
+        }
+        return res.status(401).json({ errors: [{ message: "You are verified" }] });
+      } else {
+        return res.status(401).json({ errors: [{ message: "Invalid link" }] });
+      }
     }
   } catch (err) {
     console.log(err);

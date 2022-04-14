@@ -22,15 +22,15 @@ const UserSchema=new mongoose.Schema({
         type:String,
         default:"student"
     },
-    verifcation:{
+    verification:{
         type:Boolean,
         default:false
     },
-    adminVerifcation:{
+    adminVerification:{
         type:Boolean,
         default:false
     },
-    profileExits:{
+    profileExists:{
         type:Boolean,
         default:false
     }
