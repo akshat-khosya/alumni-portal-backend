@@ -13,6 +13,7 @@ verifyEmailTemplate = require("../utils/verifyEmailTemplate");
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    truef;
     return res.status(400).json({ errors: errors.array() });
   }
   try {
@@ -63,7 +64,22 @@ exports.login = async (req, res) => {
       );
       if (validate) {
         if (checkUser.verification) {
-          if (checkUser.adminverification) {
+          if (checkUser.profileExists) {
+            if (checkUser.adminverification) {
+              const { password, ...others } = checkUser._doc;
+              console.log(others);
+              const token = jwt.sign(
+                { uid: checkUser._id.toHexString() },
+                process.env.JWT_SECRET,
+                { expiresIn: "30d" }
+              );
+              return res.status(200).json({ useData: others, token: token });
+            } else {
+              return res
+                .status(401)
+                .json({ errors: [{ message: "Admin will verify you" }] });
+            }
+          } else {
             const { password, ...others } = checkUser._doc;
             console.log(others);
             const token = jwt.sign(
@@ -72,10 +88,6 @@ exports.login = async (req, res) => {
               { expiresIn: "30d" }
             );
             return res.status(200).json({ useData: others, token: token });
-          } else {
-            return res
-              .status(401)
-              .json({ errors: [{ message: "Admin will verify you" }] });
           }
         } else {
           return res.status(401).json({
@@ -112,12 +124,14 @@ exports.verifyEmail = async (req, res) => {
           { email: email },
           { verification: true }
         );
-        if(!user){
+        if (!user) {
           return res
-        .status(401)
-        .json({ errors: [{ message: "could not verify " }] });
+            .status(401)
+            .json({ errors: [{ message: "could not verify " }] });
         }
-        return res.status(401).json({ errors: [{ message: "You are verified" }] });
+        return res
+          .status(401)
+          .json({ errors: [{ message: "You are verified" }] });
       } else {
         return res.status(401).json({ errors: [{ message: "Invalid link" }] });
       }
