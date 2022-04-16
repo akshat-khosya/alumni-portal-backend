@@ -33,6 +33,10 @@ const UserSchema=new mongoose.Schema({
     profileExists:{
         type:Boolean,
         default:false
+    },
+    folderLink:{
+        type:String,
+        unique:true
     }
 
 

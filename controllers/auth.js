@@ -9,6 +9,7 @@ const {
   findOneAndUpdate,
   findOne,
 } = require("../models/user");
+const { createFolder } = require("../utils/drive");
 verifyEmailTemplate = require("../utils/verifyEmailTemplate");
 exports.register = async (req, res) => {
   const errors = validationResult(req);
@@ -29,7 +30,7 @@ exports.register = async (req, res) => {
     const hasedPass = await bcrypt.hash(req.body.password, salt);
     req.body.password = hasedPass;
     const newUser = new User(req.body);
-    await newUser.save((err, savedUser) => {
+    await newUser.save(async(err, savedUser) => {
       if (err) {
         console.log(err);
         return res.status(500).json({ errors: [{ message: "server error" }] });
@@ -37,9 +38,25 @@ exports.register = async (req, res) => {
         const link = `${process.env.URL}api/auth/verifyemail/${
           savedUser.email
         }/${savedUser._id.toHexString()}`;
-        console.log(link);
-        sendEmail(req.body.email, "verify email", verifyEmailTemplate(link));
-        return res.status(200).json({ message: "user registered succesfully" });
+        
+        const response =await createFolder(savedUser._id.toHexString());
+       console.log(response.id);
+        if(response.id){
+          const user=await User.updateOne({email:savedUser.email},{folderLink:response.id});
+          if(!user){
+            return res.status(500).json({ errors: [{ message: "server error" }] });
+          }else{
+            sendEmail(req.body.email, "verify email", verifyEmailTemplate(link));
+            return res.status(200).json({ message: "user registered succesfully" });
+          }
+        }else{
+          
+          const user = await User.deleteOne(
+            { email: savedUser.email }
+          );
+          return res.status(500).json({ errors: [{ message: "server error" }] });
+        }
+        
       }
     });
   } catch (err) {
@@ -141,3 +158,15 @@ exports.verifyEmail = async (req, res) => {
     return res.status(500).json({ errors: [{ message: "server error" }] });
   }
 };
+
+exports.autoLogin=async (req,res)=>{
+  if(req.user){
+    const sendData= await User.findOne({_id:req.user});
+    const { password, ...others } = sendData._doc;
+    return res.status(200).json({ useData: others});
+  }else{
+    return res
+        .status(401)
+        .json({ errors: [{ message: "Invalid Credentials" }] });
+  }
+}
