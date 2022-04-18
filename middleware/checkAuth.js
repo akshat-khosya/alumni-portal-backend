@@ -1,14 +1,17 @@
 const jwt = require("jsonwebtoken");
 exports.checkAuth = (req, res, next) => {
-    const authtkn = req.cookies.x-auth-token;
-    if (!authtkn) {
+    
+    const authtkn = req.header('x-auth-token');
+    
+    if (!authtkn) { 
       return res
         .status(400)
         .json({ msg: "No auth token found. Please login again." });
       }
       try {
           let decoded = jwt.verify(authtkn, process.env.JWT_SECRET);
-          req.user = decoded;
+          console.log(decoded.uid);
+          req.user = decoded.uid;
           
       } catch (error) {
           return res

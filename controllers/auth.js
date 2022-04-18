@@ -3,13 +3,9 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { sendEmail } = require("../utils/email");
-const {
-  findById,
-  findByIdAndUpdate,
-  findOneAndUpdate,
-  findOne,
-} = require("../models/user");
+
 const { createFolder } = require("../utils/drive");
+const PDetails = require("../models/personaldetails");
 verifyEmailTemplate = require("../utils/verifyEmailTemplate");
 exports.register = async (req, res) => {
   const errors = validationResult(req);
@@ -152,7 +148,7 @@ exports.verifyEmail = async (req, res) => {
       } else {
         return res.status(401).json({ errors: [{ message: "Invalid link" }] });
       }
-    }
+    }PersonalDetailsSchema
   } catch (err) {
     console.log(err);
     return res.status(500).json({ errors: [{ message: "server error" }] });
@@ -168,5 +164,33 @@ exports.autoLogin=async (req,res)=>{
     return res
         .status(401)
         .json({ errors: [{ message: "Invalid Credentials" }] });
+  }
+}
+
+exports.personalDetails=async (req,res)=>{
+  try {
+    const data={
+      ...req.body,
+      userId:req.user
+    };
+    const newUser = new PDetails(data); 
+    const result=await newUser.save();
+    console.log(result)
+    if(result){
+      await User.updateOne({_id:req.user},{profileExists:true},(err)=>{
+        if(err){
+          return res.status(500).json({ errors: [{ message: "server error" }] });
+        }else{
+          return res.status(200).json({ message: "user admin profile created succesfully now Admin will verify you" });
+        }
+      });
+     
+    }else{
+      return res.status(500).json({ errors: [{ message: "server error" }] });
+    }
+    
+  } catch (err) {
+    
+    return res.status(500).json({ errors: [{ message: "duplicate key error" },{duplicateKey:err.keyValue}] });
   }
 }
