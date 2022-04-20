@@ -36,11 +36,13 @@ mongoose.connect(
 
 // routes
 const auth=require("./routes/auth");
+const admin=require("./routes/admin");
 
 
 
 //routes use
 app.use("/api/auth/", auth);
+app.use("/api/admin",admin);
 
 
 

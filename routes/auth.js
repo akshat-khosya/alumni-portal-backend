@@ -9,4 +9,5 @@ router.post("/login",loginValidation,login);
 router.get('/verifyemail/:email/:token', verifyEmail);
 router.get('/autoLogin',checkAuth,autoLogin);
 router.post('/personalDetails',checkAuth,personalDetails);
+
 module.exports = router;
